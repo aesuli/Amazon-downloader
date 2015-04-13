@@ -51,53 +51,54 @@ while($id  = shift) {
     my $referer = $urlPart1.$id.$urlPart2."1".$urlPart3;
 
     my $page = 1;
-    my $lastPage = 1;
+	my $lastPage = 1;
     while($page<=$lastPage) {
 
-	my $url = $urlPart1.$id.$urlPart2.$page.$urlPart3;
+		my $url = $urlPart1.$id.$urlPart2.$page.$urlPart3;
 
-	print $url;
+		print $url;
 
-	my $request = HTTP::Request->new(GET => $url);
-	$request->referer($referer);
+		my $request = HTTP::Request->new(GET => $url);
+		$request->referer($referer);
 
-	my $response = $ua->request($request);
-	if($response->is_success) {
-	    print " GOTIT\n";
-	    my $content = $response->decoded_content;
+		my $response = $ua->request($request);
+		if($response->is_success) {
+			print " GOTIT\n";
+			my $content = $response->decoded_content;
 
-	    if(open(CONTENTFILE, ">./$dir/$page")) {
-		print CONTENTFILE $content;
-		close(CONTENTFILE);
-		print "ok\t$domain\t$id\t$page\t$lastPage\n";
-	    }
-	    else {
-		print "failed\t$domain\t$id\t$page\t$lastPage\n";
-	    }
-
-	    while($content =~ m#cm_cr_pr_top_link_([0-9]+)#gs ) {
-		my $val = $1+0;
-		if($val>$lastPage) {
-		    $lastPage = $val;
+			while($content =~ m#cm_cr_pr_btm_link_([0-9]+)#gs ) {
+				my $val = $1+0;
+				if($val>$lastPage) {
+					$lastPage = $val;
+				}
+			}
+			
+			if(open(CONTENTFILE, ">./$dir/$page")) {
+				binmode(CONTENTFILE, ":utf8");
+				print CONTENTFILE $content;
+				close(CONTENTFILE);
+				print "ok\t$domain\t$id\t$page\t$lastPage\n";
+			}
+			else {
+				print "failed\t$domain\t$id\t$page\t$lastPage\n";
+			}
+			
+			if($sleepTime>0) {
+				--$sleepTime;
+			}
 		}
-	    }
-	    
-	    if($sleepTime>0) {
-		--$sleepTime;
-	    }
-	}
-	else {
-	    print " ERROR ".$response->code;
-	    if($response->code==503) {
-		--$page;
-		++$sleepTime;
-		print " retrying (timeout $sleepTime)\n";
-	    }
-	    else {
-		print "\n";
-	    }
-	}
-	++$page;
-	sleep($sleepTime);
+		else {
+			if($response->code==503) {
+				--$page;
+				++$sleepTime;
+				print " TIMEOUT ".$response->code." retrying (new timeout $sleepTime)\n";
+			}
+			else {
+				print " Downloaded ". ($page-1). " pages for product id $id (end code:".$response->code.")\n";
+				last;
+			}
+		}
+		++$page;
+		sleep($sleepTime);
     }
 }

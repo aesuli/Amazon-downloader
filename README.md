@@ -27,7 +27,7 @@ Reviews are automatically downloaded in the _./amazonreviews/com/B0040JHVCC_ and
 
 Then the reviews are extracted from the HTML file by issuing the command:
 
-<pre>./extractAmazonReviews.pl ./amazonreviews/com/B0040JHVCC/ ./amazonreviews/com/B00004ZDB1/</pre>
+<pre>./extractAmazonReviews-DivLayout.pl ./amazonreviews/com/B0040JHVCC/ ./amazonreviews/com/B00004ZDB1/</pre>
 
 The scripts outputs one review per line on the standard output, in a CSV format:
 
@@ -37,15 +37,20 @@ The scripts outputs one review per line on the standard output, in a CSV format:
 
 Redirection can be used to save the output to a file:
 
-<pre>./extractAmazonReviews.pl ./amazonreviews/com/B0040JHVCC/ ./amazonreviews/com/B00004ZDB1/ > reviews.csv </pre>
+<pre>./extractAmazonReviews-DivLayout.pl ./amazonreviews/com/B0040JHVCC/ ./amazonreviews/com/B00004ZDB1/ > reviews.csv </pre>
 
 will save the CSV output into the "reviews.csv" file.
+
+Note that there are two versions of the extract script: "extractAmazonReviews-DivLayout.pl" and "extractAmazonReviews-TableLayout.pl".
+The DivLayout version works on the last (at April 2015) Amazon layout which ditched tables for divs. This layout is currently (again, at April 2015) used on the ".com" domain. The other domains still use the table-based layout, for which the TableLayout version is designed.
 
 ## Disclaimer
 
 I provide you the tool to download the reviews, not the right to download them. You have to respect Amazon's rights on its own data. Do not release the data you download without Amazon's consent.
 
 ## History
+
+April, 2015: added different versions of extract script to work with both table- and div-based layouts.
 
 January, 2015: moved to GitHub
 
