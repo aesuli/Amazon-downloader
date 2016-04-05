@@ -126,7 +126,7 @@ sub extract {
 		   $helpfulYes =  ($1, $2)[$1 > $2];
 		}
 		my $userId = "ANONYMOUS";
-		if($block =~ m#profile\/(.*?)["/].*?\<\/div\>.*?\<\/div\>.#gs) {
+		if($block =~ /profile\/(.*?)\//) {
 			$userId = $1;
 		}
 
