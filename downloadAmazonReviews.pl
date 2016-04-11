@@ -66,7 +66,7 @@ while($id  = shift) {
 			print " GOTIT\n";
 			my $content = $response->decoded_content;
 
-			while($content =~ m#cm_cr_pr_btm_link_([0-9]+)#gs ) {
+			while($content =~ m#cm_cr_arp_d_paging_btm_([0-9]+)#gs ) {
 				my $val = $1+0;
 				if($val>$lastPage) {
 					$lastPage = $val;
