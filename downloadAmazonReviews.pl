@@ -21,7 +21,7 @@
 # output: a directory ./amazonreviews/<domain>/<ID> is created for each product ID; HTML files containing reviews are downloaded and saved in each directory.
 
 use strict;
-use LWP::UserAgent; 
+use LWP::UserAgent;
 use HTTP::Request;
 
 $| = 1; #autoflush
@@ -54,6 +54,13 @@ while($id  = shift) {
 	my $lastPage = 1;
     while($page<=$lastPage) {
 
+		# If page already downloaded then skip
+		# but make sure first iteration runs
+		if(-e "$dir/$page" && $lastPage != 1) {
+			++$page;
+			next;
+		}
+
 		my $url = $urlPart1.$id.$urlPart2.$page.$urlPart3;
 
 		print $url;
@@ -66,13 +73,22 @@ while($id  = shift) {
 			print " GOTIT\n";
 			my $content = $response->decoded_content;
 
+			my $matched = 0;
 			while($content =~ m#cm_cr_arp_d_paging_btm_([0-9]+)#gs ) {
 				my $val = $1+0;
 				if($val>$lastPage) {
 					$lastPage = $val;
 				}
+
+				$matched = 1
 			}
-			
+
+			# Try again if no usable content was returned
+			if(!$matched) {
+			    print "Unusable results, trying again\n";
+			    next;
+			}
+
 			if(open(CONTENTFILE, ">./$dir/$page")) {
 				binmode(CONTENTFILE, ":utf8");
 				print CONTENTFILE $content;
@@ -82,7 +98,7 @@ while($id  = shift) {
 			else {
 				print "failed\t$domain\t$id\t$page\t$lastPage\n";
 			}
-			
+
 			if($sleepTime>0) {
 				--$sleepTime;
 			}
