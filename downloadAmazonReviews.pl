@@ -23,6 +23,10 @@
 use strict;
 use LWP::UserAgent;
 use HTTP::Request;
+use WWW::Mechanize::PhantomJS;
+binmode(STDIN, ':encoding(utf8)');
+binmode(STDOUT, ':encoding(utf8)');
+binmode(STDERR, ':encoding(utf8)');
 
 $| = 1; #autoflush
 
@@ -45,37 +49,35 @@ while($id  = shift) {
     mkdir $dir;
 
     my $urlPart1 = "http://www.amazon.".$domain."/product-reviews/";
-    my $urlPart2 = "/?ie=UTF8&showViewpoints=0&pageNumber=";
-    my $urlPart3 = "&sortBy=bySubmissionDateDescending";
+		my $urlPart2 = "/ref=cm_cr_getr_d_paging_btm_";
+		my $urlPart3 = "?ie=UTF8&showViewpoints=1&sortBy=recent&pageNumber=";
 
-    my $referer = $urlPart1.$id.$urlPart2."1".$urlPart3;
+    my $referer = $urlPart1.$id.$urlPart2."1".$urlPart3."1";
 
     my $page = 1;
-	my $lastPage = 1;
+		my $lastPage = 1;
     while($page<=$lastPage) {
 
-		# If page already downloaded then skip
-		# but make sure first iteration runs
-		if(-e "$dir/$page" && $lastPage != 1) {
-			++$page;
-			next;
-		}
-
-		my $url = $urlPart1.$id.$urlPart2.$page.$urlPart3;
+		my $url = $urlPart1.$id.$urlPart2.$page.$urlPart3.$page;
 
 		print $url;
 
-		my $request = HTTP::Request->new(GET => $url);
-		$request->referer($referer);
-
-		my $response = $ua->request($request);
+		
+		my $mech = WWW::Mechanize::PhantomJS->new(
+			launch_arg => ['ghostdriver/src/main.js' ],
+		);
+		
+		$mech->get($url);
+				
+		my $response = $mech->response(headers => 0);
 		if($response->is_success) {
 			print " GOTIT\n";
-			my $content = $response->decoded_content;
+			my $content = $mech->content( format => 'html' );
 
-			my $matched = 0;
-			while($content =~ m#cm_cr_arp_d_paging_btm_([0-9]+)#gs ) {
-				my $val = $1+0;
+			while($content =~ m#<span class="a-size-medium a-text-beside-button totalReviewCount">(([1-9]*[0-9],)*[1-9]?[1-9]?[0-9])</span>#gs ) {
+				my $temp = $1;	
+				$temp =~ s/,//;
+				my $val = int ($temp/10) + 1;
 				if($val>$lastPage) {
 					$lastPage = $val;
 				}
@@ -104,7 +106,7 @@ while($id  = shift) {
 			}
 		}
 		else {
-			if($response->code==503) {
+			if($mech->status()==503) {
 				--$page;
 				++$sleepTime;
 				print " TIMEOUT ".$response->code." retrying (new timeout $sleepTime)\n";
@@ -118,3 +120,4 @@ while($id  = shift) {
 		sleep($sleepTime);
     }
 }
+
